@@ -1,0 +1,3 @@
+/* The panel itself is styled inside its shadow root; this only keeps the host
+   element from taking part in the portal's layout. */
+#rkt-root { all: initial; position: static; }

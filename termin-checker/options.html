@@ -1,0 +1,108 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>RK-Termin Checker — Options</title>
+<style>
+  body { font: 14px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+         max-width: 560px; margin: 32px auto; padding: 0 20px; color: #202124; }
+  h1 { font-size: 20px; margin-bottom: 4px; }
+  .sub { color: #5f6368; margin-bottom: 24px; }
+  fieldset { border: 1px solid #dadce0; border-radius: 10px; padding: 16px; margin-bottom: 18px; }
+  legend { font-weight: 600; padding: 0 6px; }
+  label { display: block; margin-bottom: 12px; }
+  label span { display: block; font-weight: 600; margin-bottom: 4px; }
+  input[type=text], input[type=number], input[type=date], input[type=password] {
+    width: 100%; box-sizing: border-box; padding: 8px 10px;
+    border: 1px solid #dadce0; border-radius: 6px; font-size: 14px; }
+  .cb { display: flex; gap: 8px; align-items: flex-start; }
+  .cb input { margin-top: 3px; }
+  .hint { font-size: 12px; color: #5f6368; margin-top: 4px; font-weight: 400; }
+  .row { display: flex; gap: 12px; } .row label { flex: 1; }
+  button { background: #1a73e8; color: #fff; border: 0; border-radius: 6px;
+           padding: 10px 22px; font-size: 14px; font-weight: 600; cursor: pointer; }
+  #saved { color: #137333; margin-left: 12px; font-weight: 600; opacity: 0; transition: opacity .2s; }
+  #saved.on { opacity: 1; }
+  #testPush { background: #5f6368; padding: 8px 16px; font-size: 13px; }
+  #pushResult, #sessionResult { margin-left: 10px; font-size: 13px; font-weight: 600; color: #5f6368; }
+  #pushResult.good, #sessionResult.good { color: #137333; }
+  #pushResult.bad, #sessionResult.bad { color: #c5221f; }
+  #clearSession { background: #5f6368; padding: 8px 16px; font-size: 13px; }
+  @media (prefers-color-scheme: dark) {
+    body { background: #202124; color: #e8eaed; }
+    fieldset { border-color: #3c4043; }
+    input { background: #292a2d; color: #e8eaed; border-color: #3c4043; }
+  }
+</style>
+<h1>RK-Termin Checker</h1>
+<div class="sub">Settings apply to the appointment page at service2.diplo.de.</div>
+
+<fieldset>
+  <legend>Checking</legend>
+  <label class="cb"><input type="checkbox" id="autoReload">
+    <span>Re-check automatically<span class="hint">Reloads the month page on a timer while the tab is open.</span></span></label>
+  <label><span>Minutes between checks</span><input type="number" id="intervalMinutes" min="1" max="120">
+    <span class="hint">Fixed, and around the clock — slots do get released overnight. Two minutes
+    is a deliberate floor: this is a government host with obvious anti-bot control, and hammering
+    it gets your IP blocked, which defeats the purpose.</span></label>
+  <div class="row">
+        </div>
+  <div class="hint" style="margin-bottom:12px">No checking outside these hours. Missions release slots in
+  batches during business hours, so overnight polling spends your request budget for nothing.
+  Set both to the same value to check around the clock.</div>
+  <label><span>Pause between the two months (seconds)</span>
+    <input type="number" id="sweepPauseSeconds" min="0" max="60">
+    <span class="hint">Each check looks at this month and the next, back to back, on one captcha.
+    This is how long it holds on the first month before moving to the second, so you can actually
+    read it rather than watch it flash past. Set to 0 to move straight on.<br><br>
+    It only applies while the tab is visible — a hidden tab has nobody watching, and Chrome would
+    stretch the pause anyway, so it hops immediately there.</span></label>
+</fieldset>
+
+<fieldset>
+  <legend>Automatic captcha solving</legend>
+  <label><span>2Captcha API key</span><input type="password" id="twoCaptchaKey" placeholder="required for hands-off running">
+    <span class="hint">With a key set, the extension reads the captcha image, sends it to 2Captcha,
+    types the answer into the field and submits it — no typing on your part, including the retry
+    after a wrong answer. Without a key you type each one.<br><br>
+    It is a paid service (roughly $1 per 1000 captchas, so a day of 1-minute polling costs a few
+    cents). Get a key at <b>2captcha.com</b>. Wrong answers are reported back automatically so you
+    are not billed for them. Your key is stored locally and only ever sent to 2captcha.com.<br><br>
+    This never runs on the booking form — that captcha submits your application, so it stays
+    yours to complete.</span></label>
+</fieldset>
+
+<fieldset>
+  <legend>Staying unblocked</legend>
+  <label><span>Wrong captchas in a row before clearing cookies</span>
+    <input type="number" id="autoFailLimit" min="1" max="10">
+    <span class="hint">On this many consecutive wrong answers, cookies created in the last 24
+    hours are cleared and checking continues.<br><br>
+    <b>Every site is in range, but only cookies first created in that window.</b> Refreshing a
+    cookie does not reset its creation date, so a login from last week survives; what goes is what
+    was set today — new sign-ins, today's session cookies, and the portal's own. Every
+    site-scoped option was tried first and removed nothing on this portal. There is no budget: it
+    fires each time the count is reached, and any accepted answer resets it.</span></label>
+  <button type="button" id="clearSession">Clear cookies from the last 24 hours now</button><span id="sessionResult"></span>
+  <div class="hint" style="margin-top:8px">The same thing four wrong captchas in a row does on its
+  own. All sites are in range, but only cookies first created in the last 24 hours — a login from
+  last week keeps its original creation date even when refreshed, so it is not touched.</div>
+</fieldset>
+
+<fieldset>
+  <legend>Alert my phone</legend>
+  <label><span>ntfy topic</span><input type="text" id="ntfyTopic" placeholder="leave empty for no phone alerts">
+    <span class="hint">Install <b>ntfy</b> (free, on iOS and Android), subscribe to a topic name of
+    your choosing, and put the same name here. A find then pushes to your phone at maximum
+    priority, which is the long alarm-style alert rather than a quiet blip.<br><br>
+    <b>Pick something long and unguessable</b> &mdash; on the public ntfy.sh server a topic is just a
+    URL, so anyone who guesses the name can read your alerts and send you fake ones. Something like
+    <code>rktermin-colo-7f3a91c4</code>. The messages only say which dates are open, but there is no
+    reason to leave it guessable.<br><br>
+    For the alert to actually wake you, allow notifications from ntfy through Do Not Disturb in your
+    phone's settings. On Android the ntfy app can also mark this topic as insistent.</span></label>
+  <button type="button" id="testPush">Send test alert</button><span id="pushResult"></span>
+  <div class="hint" style="margin-top:8px">Testing saves your settings first, so the test sends to
+  exactly what will be used for real.</div>
+</fieldset>
+
+<button id="save">Save</button><span id="saved">Saved</span>
+<script src="options.js"></script>

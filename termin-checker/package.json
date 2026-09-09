@@ -1,0 +1,12 @@
+{
+  "name": "rktermin-checker",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Chrome extension that checks German embassy RK-Termin visa appointment availability.",
+  "scripts": {
+    "test": "node test/parser.test.js && node test/push.test.js && node test/alarm.test.js && node test/arm.test.js && node test/cycle.test.js && node test/recover.test.js && node test/fallback.test.js && node test/deadlock.test.js && node test/hints.test.js"
+  },
+  "devDependencies": {
+    "jsdom": "^24.0.0"
+  }
+}
